@@ -55,7 +55,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void updateUser(User user) {
-        userDAO.updateUser(passwordCoder(user));
+        if (!user.getPassword().equals(userDAO.getUserById(user.getUserId()).getPassword())) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
+        userDAO.updateUser(user);
     }
 
     @Override
@@ -66,10 +69,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public void addDefaultUser() {
             Set<Role> roleSet = new HashSet<>();
-            roleSet.add(roleService.findById(1L));
+            roleSet.add(roleService.findById(1));
             Set<Role> roleSet2 = new HashSet<>();
-            roleSet2.add(roleService.findById(1L));
-            roleSet2.add(roleService.findById(2L));
+            roleSet2.add(roleService.findById(1));
+            roleSet2.add(roleService.findById(2));
             User user1 = new User("Garry", "Potter", (byte) 27, "user1@mail.ru", "user1", "12345", roleSet);
             User user2 = new User("Steve", "Jobs", (byte) 52, "admin@mail.ru", "admin", "admin", roleSet2);
             addUser(user1);

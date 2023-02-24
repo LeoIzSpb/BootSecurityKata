@@ -30,6 +30,12 @@ public class RoleDAOImpl implements RoleDAO{
     }
 
     @Override
+    public Role getRole(String role) {
+        return entityManager.createQuery("select r from Role r where r.name =: role", Role.class)
+                .setParameter("role", role).getSingleResult();
+    }
+
+    @Override
     public Role findById(long id) {
         return entityManager.find(Role.class,id);
     }

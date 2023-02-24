@@ -1,5 +1,6 @@
 package ru.kata.spring.boot_security.demo.controller;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -12,6 +13,7 @@ import ru.kata.spring.boot_security.demo.service.UserService;
 
 import javax.validation.Valid;
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping()
@@ -26,14 +28,17 @@ public class AdminController {
     }
 
     @GetMapping("admin")
-    public String pageForAdmin(Model model) {
+    public String pageForAdmin(@AuthenticationPrincipal User user, Model model) {
         model.addAttribute("users", userService.getAllUsers());
+        model.addAttribute("user", user);
+        model.addAttribute("roles", roleService.getAllRoles());
         return "users";
     }
 
     @GetMapping("admin/new")
-    public String pageCreateUser(@ModelAttribute("user") User user, Model model) {
-        model.addAttribute("listRoles",roleService.getAllRoles());
+    public String pageCreateUser(@AuthenticationPrincipal User user, Model model) {
+        model.addAttribute("user", user);
+        model.addAttribute("listRoles", roleService.getAllRoles());
         return "create";
     }
 
@@ -54,27 +59,20 @@ public class AdminController {
         return "redirect:/admin";
     }
 
+
     @PostMapping("admin/delete")
     public String pageDelete(@RequestParam(value = "id") long id) {
         userService.removeUser(id);
         return "redirect:/admin";
     }
 
-    @GetMapping("admin/edit")
-    public String pageEditUser(@RequestParam(value = "id") long id, Model model) {
-        model.addAttribute("user",userService.getUserById(id));
-        model.addAttribute("listRoles", roleService.getAllRoles());
-        return "edit";
-    }
-
-    @PostMapping("admin/edit")
-    public String pageEdit(@Valid User user, BindingResult bindingResult,
-                           @RequestParam("listRoles") ArrayList<Long>roles) {
-        if (bindingResult.hasErrors()) {
-            return "edit";
-        }
+    @PutMapping("/{id}/update")
+    public String updateUser(@ModelAttribute("user") User user, @RequestParam("listRoles") ArrayList<Long>roles) {
         user.setRoles(roleService.findByIdRoles(roles));
         userService.updateUser(user);
         return "redirect:/admin";
     }
+
+
+
 }

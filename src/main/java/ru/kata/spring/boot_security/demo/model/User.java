@@ -1,11 +1,14 @@
 package ru.kata.spring.boot_security.demo.model;
 
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
 import javax.validation.constraints.*;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -14,35 +17,42 @@ public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long userId;
 
     @Pattern(regexp = "[A-Za-z]{2,15}", message = "Name should be between 2 and 15 latin characters")
+    @Column(name = "name")
     private String name;
 
     @Pattern(regexp = "[A-Za-z]{2,15}", message = "Name should be between 2 and 15 latin characters")
+    @Column(name = "surname")
     private String surname;
 
     @Min(value = 0, message = "Age should be >= 0")
     @Max(value = 127, message = "Age should be < 128")
+    @Column(name = "age")
     private byte age;
 
     @Pattern(regexp = "([A-z0-9_.-]+)@([A-z0-9_.-]+).([A-z]{2,8})", message = "Enter correct email")
+    @Column(name = "email")
     private String email;
 
     @NotEmpty(message = "Username cannot be empty")
     @Size(min = 2, max = 15, message = "Name should be between 2 and 15 latin characters")
-    @Column(unique = true)
+    @Column(name="username")
     private String username;
 
     @NotEmpty(message = "Password cannot be empty")
     @Size(min = 4, message = "Password should be greater then 4 symbols")
+    @Column(name = "password")
     private String password;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
+    @Fetch(FetchMode.JOIN)
     @JoinTable(name = "users_roles",
             joinColumns = @JoinColumn(name = "userId"),
             inverseJoinColumns = @JoinColumn(name = "roleId"))
-    private Set<Role> roles;
+    private Set<Role> roles = new HashSet<>();;
 
     public User() {
     }
