@@ -3,13 +3,12 @@ package ru.kata.spring.boot_security.demo.model;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
 import javax.validation.constraints.*;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 @Table(name = "users")
@@ -20,11 +19,11 @@ public class User implements UserDetails {
     @Column(name = "id")
     private Long userId;
 
-    @Pattern(regexp = "[A-Za-z]{2,15}", message = "Name should be between 2 and 15 latin characters")
+    @Pattern(regexp = "[A-Za-zа-яёА-ЯЁ]{2,15}", message = "Name should be between 2 and 15 latin characters")
     @Column(name = "name")
     private String name;
 
-    @Pattern(regexp = "[A-Za-z]{2,15}", message = "Name should be between 2 and 15 latin characters")
+    @Pattern(regexp = "[A-Za-zа-яёА-ЯЁ]{2,15}", message = "Name should be between 2 and 15 latin characters")
     @Column(name = "surname")
     private String surname;
 
@@ -33,12 +32,14 @@ public class User implements UserDetails {
     @Column(name = "age")
     private byte age;
 
+
     @Pattern(regexp = "([A-z0-9_.-]+)@([A-z0-9_.-]+).([A-z]{2,8})", message = "Enter correct email")
     @Column(name = "email")
     private String email;
 
     @NotEmpty(message = "Username cannot be empty")
     @Size(min = 2, max = 15, message = "Name should be between 2 and 15 latin characters")
+    @Pattern(regexp = "[A-Za-z0-9]{2,15}", message = "Name should be between 2 and 15 characters")
     @Column(name="username")
     private String username;
 
@@ -47,8 +48,9 @@ public class User implements UserDetails {
     @Column(name = "password")
     private String password;
 
+    @NotEmpty(message = "The role cannot be omitted")
     @ManyToMany(fetch = FetchType.LAZY)
-    @Fetch(FetchMode.JOIN)
+    //@Fetch(FetchMode.JOIN)
     @JoinTable(name = "users_roles",
             joinColumns = @JoinColumn(name = "userId"),
             inverseJoinColumns = @JoinColumn(name = "roleId"))
@@ -125,7 +127,13 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return getRoles();
+        Set<Role> roles = getRoles();
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+
+        for (Role role : roles) {
+            authorities.add(new SimpleGrantedAuthority(role.getRole()));
+        }
+        return authorities;
     }
 
     @Override

@@ -16,14 +16,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
-@Configuration
+
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
-@ComponentScan
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    private final UserDetailsService userDetailsService; // сервис, с помощью которого тащим пользователя
-    private final SuccessUserHandler successUserHandler; // класс, в котором описана логика перенаправления пользователей по ролям
+    private final UserDetailsService userDetailsService;
+    private final SuccessUserHandler successUserHandler;
 
     public SecurityConfig(@Qualifier("userDetailsServiceImpl")UserDetailsService userDetailsService,
                           SuccessUserHandler successUserHandler) {
@@ -32,8 +30,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Autowired
-    public void configureGlobal(AuthenticationManagerBuilder auth) {
-        auth.authenticationProvider(daoAuthenticationProvider());
+    public void configureGlobalSecurity(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
     }
 
     @Bean
@@ -41,18 +39,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         return new BCryptPasswordEncoder(12);
     }
 
-    @Bean
-    public DaoAuthenticationProvider daoAuthenticationProvider(){
-        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
-        daoAuthenticationProvider.setUserDetailsService(userDetailsService);
-        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
-        return daoAuthenticationProvider;
-    }
-
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.formLogin()
-                .loginPage("/login")
                 .successHandler(successUserHandler)
                 .loginProcessingUrl("/login")
                 .usernameParameter("username")
@@ -61,13 +50,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.logout()
                 .permitAll()
                 .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
-                .logoutSuccessUrl("/login?logout")
+                .logoutSuccessUrl("/login")
                 .and().csrf().disable();
         http
                 .authorizeRequests()
                 .antMatchers("/login").anonymous()
-                .antMatchers("/admin/**").access("hasRole('ROLE_ADMIN')")
-                .antMatchers("/user/**").access("hasAnyRole('ROLE_USER','ROLE_ADMIN')")
+                .antMatchers("/").access("hasAnyRole('ROLE_USER','ROLE_ADMIN')")
                 .anyRequest().authenticated();
     }
 }
